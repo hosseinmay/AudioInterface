@@ -1,32 +1,86 @@
 package com.audiointerface;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
+import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.TargetDataLine;
+
+
 
 public class Main {
-
+	static TargetDataLine microphone;
+	static boolean stopCapture = false;
+	static ByteArrayOutputStream byteArrayOutputStream;
+	static AudioFormat audioFormat;
+	AudioInputStream audioInputStream;
+	SourceDataLine sourceDataLine;
+		
 	public static void main(String[] args) {
-		audioFormat = getAudioFormat();
-		DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
+		captureAudio();
 	}
+
+	private static void captureAudio(){
+		AudioFormat audioFormat = getAudioFormat();
+		DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
+		Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
+		Mixer mixer = AudioSystem.getMixer(mixerInfo[1]); //Get the first mixer (call getMixers())
+		try {
+			microphone = (TargetDataLine) mixer.getLine(dataLineInfo);
+			microphone.open(audioFormat);
+		} catch (LineUnavailableException e) {
+			e.printStackTrace();
+		}
+		microphone.start();
+		Thread captureThread = new CaptureThread();
+		captureThread.start();
+	}
+	
 	public static void getMixers(){
 		Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
 		System.out.println("Available mixers:");
-		for(int cnt = 0; cnt < mixerInfo.length;cnt++){
+		for	(int cnt = 0; cnt < mixerInfo.length;cnt++) {
 			System.out.println(mixerInfo[cnt].getName());
 		}
+		System.out.println(mixerInfo[0]);
 	}
-	private AudioFormat getAudioFormat(){
-		float sampleRate = 22050;
+	
+	private static AudioFormat getAudioFormat(){
+		float sampleRate = 8000.0F;
 	    int sampleSizeInBits = 16;
 	    int channels = 1;
 	    boolean signed = true;
-	    boolean bigEndian = false;
+	    boolean bigEndian = true;
 	    return new AudioFormat(sampleRate,
 	                           sampleSizeInBits,
 	                           channels,
 	                           signed,
 	                           bigEndian);
-	  }
+    }
+	static class CaptureThread extends Thread{
+		byte tempBuffer[] = new byte[10000];
+		public void run() {
+			byteArrayOutputStream = new ByteArrayOutputStream();
+			stopCapture = false;
+			while (!stopCapture) {
+				  int cnt = microphone.read(tempBuffer,0,tempBuffer.length);
+				  if (cnt > 0) {
+					  byteArrayOutputStream.write(tempBuffer,0,cnt);
+				  }
+				  System.out.println(byteArrayOutputStream);
+			}
+			try {
+				byteArrayOutputStream.close();
+			} catch (IOException e) {
+			  	e.printStackTrace();
+			}
+		}
+	}
 }
+
