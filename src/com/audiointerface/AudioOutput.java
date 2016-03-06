@@ -1,18 +1,10 @@
 package com.audiointerface;
-import java.io.ByteArrayOutputStream;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.LineUnavailableException;
-
 
 public class AudioOutput {
 	public AudioOutput(){
-		
-	};
-	
+
+	}
+
 	public void outputAudio(int[] byteAudioData) {
 //		AudioData audiodata = new AudioData(byteAudioData);
 //		AudioFormat audioFormat = getAudioFormat();
