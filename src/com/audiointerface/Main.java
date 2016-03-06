@@ -1,20 +1,12 @@
 package com.audiointerface;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.Mixer;
-import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.TargetDataLine;
+import org.shared.array.ComplexArray;
 import org.shared.array.RealArray;
 import org.shared.fft.JavaFftService;
-import java.util.Arrays;
+
+import javax.sound.sampled.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 
 public class Main {
@@ -24,30 +16,25 @@ public class Main {
 	static AudioFormat audioFormat;
 	AudioInputStream audioInputStream;
 	SourceDataLine sourceDataLine;
-		
+
 	public static void main(String[] args) {
-		captureAudio();
-		//AllFftTests tests = new A
-	
-		JavaFftService fftService = new JavaFftService();
-		int[] dims = {1, 1};
-		RealArray ftestIn = new RealArray(new double[]{1.0, 1.0, 1.0, 1.0});
-		double[] ftestOut = {0.0, 0.0, 0.0, 0.0};
-		
-		System.out.println(Arrays.toString(ftestIn));
-		
-		fftService.fft(dims, ftestIn, ftestOut);
-		
-		System.out.println(Arrays.toString(ftestOut));
-		
-		
-		double[] rtestIn = ftestOut;
-		double[] rtestOut = ftestOut;
-		
-		fftService.ifft(dims, rtestIn, rtestOut);
-		
-		System.out.println(Arrays.toString(rtestOut));
-	}
+
+        captureAudio();
+
+        //AllFftTests tests = new A
+
+        JavaFftService fftService = new JavaFftService();
+        int[] dims = {1, 1};
+        RealArray ftestIn = new RealArray(new double[]{0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0});
+        ComplexArray ftestOut;
+
+        System.out.println(ftestIn);
+
+        ftestOut = ftestIn.tocRe().ifft();
+
+        System.out.println(ftestOut);
+
+    }
 
 	private static void captureAudio(){
 		AudioFormat audioFormat = getAudioFormat();
@@ -64,7 +51,7 @@ public class Main {
 		Thread captureThread = new CaptureThread();
 		captureThread.start();
 	}
-	
+
     public static void getMixers(){
 		Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
 		System.out.println("Available mixers:");
@@ -73,8 +60,8 @@ public class Main {
 		}
 		System.out.println(mixerInfo[0]);
 	}
-	
-	private static AudioFormat getAudioFormat(){
+
+    private static AudioFormat getAudioFormat(){
 		float sampleRate = 8000.0F;
 	    int sampleSizeInBits = 16;
 	    int channels = 1;
