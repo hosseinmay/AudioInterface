@@ -1,7 +1,9 @@
 package com.audiointerface;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 
 import javax.sound.sampled.AudioFormat;
@@ -12,48 +14,59 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.TargetDataLine;
-import org.shared.array.RealArray;
-import org.shared.fft.JavaFftService;
+
+//import org.shared.array.RealArray;
+//import org.shared.fft.JavaFftService;
 import java.util.Arrays;
+
+
+import sun.audio.AudioData;
+import sun.audio.AudioDataStream;
+import sun.audio.AudioPlayer;  
+
 
 
 public class Main {
 	static TargetDataLine microphone;
+	static SourceDataLine speaker;
 	static boolean stopCapture = false;
-	static ByteArrayOutputStream byteArrayOutputStream;
+	static ByteArrayOutputStream audioOutputStream;
 	static AudioFormat audioFormat;
-	AudioInputStream audioInputStream;
-	SourceDataLine sourceDataLine;
-		
+	static AudioInputStream audioInputStream;
+
 	public static void main(String[] args) {
 		captureAudio();
+
 		//AllFftTests tests = new A
 	
-		JavaFftService fftService = new JavaFftService();
-		int[] dims = {1, 1};
-		RealArray ftestIn = new RealArray(new double[]{1.0, 1.0, 1.0, 1.0});
-		double[] ftestOut = {0.0, 0.0, 0.0, 0.0};
-		
-		System.out.println(Arrays.toString(ftestIn));
-		
-		fftService.fft(dims, ftestIn, ftestOut);
-		
-		System.out.println(Arrays.toString(ftestOut));
-		
-		
-		double[] rtestIn = ftestOut;
-		double[] rtestOut = ftestOut;
-		
-		fftService.ifft(dims, rtestIn, rtestOut);
-		
-		System.out.println(Arrays.toString(rtestOut));
+//		JavaFftService fftService = new JavaFftService();
+//		int[] dims = {1, 1};
+//		RealArray ftestIn = new RealArray(new double[]{1.0, 1.0, 1.0, 1.0});
+//		double[] ftestOut = {0.0, 0.0, 0.0, 0.0};
+//		
+//		System.out.println(Arrays.toString(ftestIn));
+//		
+//		fftService.fft(dims, ftestIn, ftestOut);
+//		
+//		System.out.println(Arrays.toString(ftestOut));
+//		
+//		
+//		double[] rtestIn = ftestOut;
+//		double[] rtestOut = ftestOut;
+//		
+//		fftService.ifft(dims, rtestIn, rtestOut);
+//		
+//		System.out.println(Arrays.toString(rtestOut));
+//
+//		getMixers();
+
 	}
 
 	private static void captureAudio(){
 		AudioFormat audioFormat = getAudioFormat();
 		DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
 		Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
-		Mixer mixer = AudioSystem.getMixer(mixerInfo[1]); //Get the first mixer (call getMixers())
+		Mixer mixer = AudioSystem.getMixer(mixerInfo[0]); //Get the first mixer (call getMixers())
 		try {
 			microphone = (TargetDataLine) mixer.getLine(dataLineInfo);
 			microphone.open(audioFormat);
@@ -71,7 +84,6 @@ public class Main {
 		for	(int cnt = 0; cnt < mixerInfo.length;cnt++) {
 			System.out.println(mixerInfo[cnt].getName());
 		}
-		System.out.println(mixerInfo[0]);
 	}
 	
 	private static AudioFormat getAudioFormat(){
@@ -79,7 +91,7 @@ public class Main {
 	    int sampleSizeInBits = 16;
 	    int channels = 1;
 	    boolean signed = true;
-	    boolean bigEndian = true;
+	    boolean bigEndian = false;
 	    return new AudioFormat(sampleRate,
 	                           sampleSizeInBits,
 	                           channels,
@@ -89,20 +101,73 @@ public class Main {
 	static class CaptureThread extends Thread{
 		byte tempBuffer[] = new byte[10000];
 		public void run() {
-			byteArrayOutputStream = new ByteArrayOutputStream();
-			stopCapture = false;
-			while (!stopCapture) {
+			audioOutputStream = new ByteArrayOutputStream();
+			int LOL = 0;
+			while (LOL < 48000) {
 				  int cnt = microphone.read(tempBuffer,0,tempBuffer.length);
+				  LOL += cnt;
 				  if (cnt > 0) {
-					  byteArrayOutputStream.write(tempBuffer,0,cnt);
+					  audioOutputStream.write(tempBuffer,0,cnt);
 				  }
-				  System.out.println(byteArrayOutputStream);
+				  //System.out.println(LOL);
 			}
 			try {
-				byteArrayOutputStream.close();
+				audioOutputStream.close();
 			} catch (IOException e) {
 			  	e.printStackTrace();
 			}
+			playAudio(audioOutputStream);
+		}
+		private void playAudio(ByteArrayOutputStream audioOutputStream){
+			byte audioData[] = audioOutputStream.toByteArray();
+//			AudioData audiodata = new AudioData(audioData);
+//			AudioDataStream audioStream = new AudioDataStream(audiodata);
+//			AudioPlayer.player.start(audioStream);
+			InputStream audioInputStream = new ByteArrayInputStream(audioData);
+			AudioFormat audioFormat = getAudioFormat();
+			audioInputStream = new AudioInputStream(audioInputStream, audioFormat,
+					audioData.length/audioFormat.getFrameSize());
+			DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, audioFormat);
+			try {
+				speaker = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
+				speaker.open(audioFormat);
+			} catch (LineUnavailableException e) {
+				e.printStackTrace();
+			}
+			speaker.start();
+			try	{
+				int cnt;
+				while ((cnt=audioInputStream.read(tempBuffer, 0, tempBuffer.length)) != -1) {
+					if (cnt > 0) {
+						speaker.write(tempBuffer, 0, cnt);
+					}
+				}
+		    } catch (Exception e) {
+		    	System.out.println(e);
+		    	System.exit(0);
+		    }
+			speaker.drain();
+			speaker.close();
+//		    Thread playThread = new PlayThread();
+//		    playThread.start();
+		}
+	}
+	static class PlayThread extends Thread{
+		byte tempBuffer[] = new byte[10000];
+		public void run(){
+			try	{
+				int cnt;
+				while ((cnt=audioInputStream.read(tempBuffer, 0, tempBuffer.length)) != -1) {
+					if (cnt > 0) {
+						speaker.write(tempBuffer, 0, cnt);
+					}
+				}
+		    } catch (Exception e) {
+		    	System.out.println(e);
+		    	System.exit(0);
+		    }
+			speaker.drain();
+			speaker.close();
 		}
 	}
 }
