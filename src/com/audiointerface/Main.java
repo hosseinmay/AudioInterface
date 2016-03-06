@@ -1,28 +1,10 @@
 package com.audiointerface;
 
+import javax.sound.sampled.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.Mixer;
-import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.TargetDataLine;
-
-import org.shared.array.RealArray;
-import org.shared.fft.JavaFftService;
-import java.util.Arrays;
-
-
-import sun.audio.AudioData;
-import sun.audio.AudioDataStream;
-import sun.audio.AudioPlayer;  
 
 
 
@@ -35,32 +17,12 @@ public class Main {
 	static AudioInputStream audioInputStream;
 
 	public static void main(String[] args) {
-		captureAudio();
+        DataGrahamSocket socket = new DataGrahamSocket();
+        socket.send(new byte[]{(byte) 128});
 
-		//AllFftTests tests = new A
-	
-		JavaFftService fftService = new JavaFftService();
-		int[] dims = {1, 1};
-		RealArray ftestIn = new RealArray(new double[]{1.0, 1.0, 1.0, 1.0});
-		double[] ftestOut = {0.0, 0.0, 0.0, 0.0};
-		
-		System.out.println(Arrays.toString(ftestIn));
-		
-		fftService.fft(dims, ftestIn, ftestOut);
-		
-		System.out.println(Arrays.toString(ftestOut));
-		
-		
-		double[] rtestIn = ftestOut;
-		double[] rtestOut = ftestOut;
-		
-		fftService.ifft(dims, rtestIn, rtestOut);
-		
-		System.out.println(Arrays.toString(rtestOut));
-
-		getMixers();
-
-	}
+        //captureAudio();
+        //getMixers();
+    }
 
 	private static void captureAudio(){
 		AudioFormat audioFormat = getAudioFormat();

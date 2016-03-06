@@ -17,7 +17,7 @@ public class NaiveChecksumGenerator implements ChecksumGenerator {
             output ^= data[i];
         }
 
-        return new byte[output];
+        return new byte[]{output};
     }
 
     @Override

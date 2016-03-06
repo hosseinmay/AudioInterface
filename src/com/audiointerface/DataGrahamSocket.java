@@ -5,11 +5,12 @@ package com.audiointerface;
  */
 public class DataGrahamSocket {
 
-    AudioManager audioManager = new AudioManager();
+    AudioByteConverter audioByteConverter = new AudioByteConverter();
     ChecksumManager checksumManager = new ChecksumManager(new NaiveChecksumGenerator());
 
     public void send(byte[] data) {
-
+        byte[] checkedData = checksumManager.generateCheckedData(data);
+        byte[] audioData = audioByteConverter.dataToAudio(checkedData);
     }
 
     public byte[] receive() {
