@@ -4,6 +4,7 @@ package com.audiointerface;
  * Created by gblea on 2016-03-05.
  */
 public class DataGrahamSocket {
+    final Object lock = new Object();
 
     AudioByteConverter audioByteConverter = new AudioByteConverter();
     ChecksumManager checksumManager = new ChecksumManager(new NaiveChecksumGenerator());
@@ -14,7 +15,13 @@ public class DataGrahamSocket {
     }
 
     public byte[] receive() {
-        // TODO: Block
+        synchronized (lock) {
+            try {
+                lock.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         return new byte[0];
     }
