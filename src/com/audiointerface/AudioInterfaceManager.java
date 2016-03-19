@@ -101,8 +101,8 @@ public class AudioInterfaceManager {
 	}
 	
 	public AudioFormat getAudioFormat(){
-		float sampleRate = 8000.0F;
-	    int sampleSizeInBits = 16;
+		float sampleRate = ChannelConstants.ANDROID_SAMPLE_RATE;
+	    int sampleSizeInBits = ChannelConstants.RESOLUTION;
 	    int channels = 1;
 	    boolean signed = true;
 	    boolean bigEndian = false;

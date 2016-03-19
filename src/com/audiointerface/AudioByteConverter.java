@@ -15,7 +15,7 @@ public class AudioByteConverter {
     private int bitsPerMessage;
 
     public AudioByteConverter() {
-        this(ChannelConstants.NYQUIST_RATE, ChannelConstants.AQUISITION_TIME);
+        this(ChannelConstants.ANDROID_NYQUIST_RATE, ChannelConstants.AQUISITION_TIME);
     }
 
     /**
@@ -29,12 +29,12 @@ public class AudioByteConverter {
         this.bitsPerMessage = samplingFrequency * aquisitionTime / 1000;
     }
 
-    public byte[] dataToAudio(byte[] data) {
+    public long [] dataToAudio(byte[] data) {
 
         double[] frequencies = BitManipulator.extractBitsAsDoubles(data);
 
         // Output signal will play for some multiple of bitsPerMessage, even if we don't have enough bits to fill the last message
-        double[] outputSignal = new double[(frequencies.length / bitsPerMessage + 1) * (bitsPerMessage)];
+        double[] outputSignal = new double[(frequencies.length / bitsPerMessage + 1) * bitsPerMessage * 2];
 
         for (int i = 0; i <= frequencies.length / bitsPerMessage; i++) {
 
@@ -58,15 +58,33 @@ public class AudioByteConverter {
 
             assert timeDomain == complexTimeDomain.torRe(); // TODO: Remove
 
-            System.arraycopy(timeDomain.values(), 0, outputSignal, i * bitsPerMessage, bitsPerMessage);
+            System.arraycopy(timeDomain.values(), 0, outputSignal, i * bitsPerMessage, bitsPerMessage * 2);
         }
 
-        // TODO: Convert to bytes and return
+        return normalizeTimeDomainDoubleToLong(outputSignal);
+    }
+
+    public byte[] audioToData(long [] audio) {
+
         return new byte[0];
     }
 
-    public byte[] audioToData(byte[] audio) {
+    private long [] normalizeTimeDomainDoubleToLong(double [] doubleOutput) {
+        double max = 0.0;
+        for (int i = 0; i < doubleOutput.length; i++) {
+            if(max < Math.abs(doubleOutput[i])){
+                max = Math.abs(doubleOutput[i]);
+            }
+        }
 
-        return new byte[0];
+        double scalingFactor = Long.MAX_VALUE/max;
+
+        long [] longOutput = new long[doubleOutput.length];
+
+        for (int i = 0; i < doubleOutput.length; i++) {
+            longOutput[i] = (long)(doubleOutput[i] * scalingFactor);
+        }
+
+        return longOutput;
     }
 }

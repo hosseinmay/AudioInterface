@@ -9,8 +9,8 @@ public class DataGrahamSocket {
     ChecksumManager checksumManager = new ChecksumManager(new NaiveChecksumGenerator());
 
     public void send(byte[] data) {
-        byte[] checkedData = checksumManager.generateCheckedData(data);
-        byte[] audioData = audioByteConverter.dataToAudio(checkedData);
+        byte [] checkedData = checksumManager.generateCheckedData(data);
+        long [] audioData = audioByteConverter.dataToAudio(checkedData);
     }
 
     public byte[] receive() {
