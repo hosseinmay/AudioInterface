@@ -1,8 +1,11 @@
 package com.audiointerface;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.junit.Assert;
 import org.shared.array.ComplexArray;
 import org.shared.array.RealArray;
+
+import java.util.Arrays;
 
 /**
  * Created by gblea on 2016-03-05.
@@ -26,11 +29,30 @@ public class AudioByteConverter {
 
         this.samplingFrequency = samplingFrequency;
         this.aquisitionTime = aquisitionTime;
-        this.bitsPerMessage = samplingFrequency * aquisitionTime / 1000;
+
+        // TODO: Change back to a calculation
+        this.bitsPerMessage = 216; //samplingFrequency * aquisitionTime / 1000;
+    }
+
+    public byte [] audioToData(long [] audio) {
+        double [] doubleAudio = new double[audio.length];
+        for (int i = 0; i < audio.length; i++) {
+            doubleAudio[i] = audio[i];
+        }
+
+        RealArray timeDomain = new RealArray(doubleAudio);
+        ComplexArray complexFreqDomain = timeDomain.tocRe().fft();
+        RealArray freqDomain = complexFreqDomain.torRe();
+
+        double [] bits = new double[bitsPerMessage];
+        System.arraycopy(freqDomain.values(), 1, bits, 0, bitsPerMessage);
+
+        return BitManipulator.extractDoublesAsBits(bits);
     }
 
     public long [] dataToAudio(byte[] data) {
 
+        // TODO: How do we know the length of the message?
         double[] frequencies = BitManipulator.extractBitsAsDoubles(data);
 
         // Output signal will play for some multiple of bitsPerMessage, even if we don't have enough bits to fill the last message
@@ -54,9 +76,11 @@ public class AudioByteConverter {
             int[] dims = {1, 1};
             RealArray fourierDomain = new RealArray(fourierFrequencies);
             ComplexArray complexTimeDomain = fourierDomain.tocRe().ifft();
-            RealArray timeDomain = complexTimeDomain.torAbs();
+            RealArray timeDomain = complexTimeDomain.torRe();
 
-            assert timeDomain == complexTimeDomain.torRe(); // TODO: Remove
+            RealArray backToFourierDomain = timeDomain.tocRe().fft().torRe();
+
+            System.out.println(timeDomain.toString());
 
             System.arraycopy(timeDomain.values(), 0, outputSignal, i * bitsPerMessage, bitsPerMessage * 2);
         }
@@ -64,10 +88,6 @@ public class AudioByteConverter {
         return normalizeTimeDomainDoubleToLong(outputSignal);
     }
 
-    public byte[] audioToData(long [] audio) {
-
-        return new byte[0];
-    }
 
     private long [] normalizeTimeDomainDoubleToLong(double [] doubleOutput) {
         double max = 0.0;

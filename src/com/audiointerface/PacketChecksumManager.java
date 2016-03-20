@@ -3,14 +3,14 @@ package com.audiointerface;
 /**
  * Created by gblea on 2016-03-05.
  */
-public class ChecksumManager {
+public class PacketChecksumManager {
     private ChecksumGenerator generator;
 
-    public ChecksumManager(ChecksumGenerator generator) {
+    public PacketChecksumManager(ChecksumGenerator generator) {
         this.generator = generator;
     }
 
-    public byte[] generateCheckedData(byte[] data) {
+    public byte[] addChecksum(byte[] data) {
         byte[] checkedData = new byte[data.length + generator.checksumSize()];
         byte[] checksum = generator.generateChecksum(data);
 
@@ -29,5 +29,12 @@ public class ChecksumManager {
             }
         }
         return true;
+    }
+
+    public byte [] stripChecksum(byte [] data) {
+        byte [] result = new byte [data.length - generator.checksumSize()];
+        System.arraycopy(data, 0, result, 0, result.length);
+
+        return result;
     }
 }
