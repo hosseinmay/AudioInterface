@@ -5,7 +5,7 @@ import javax.sound.sampled.*;
 public class AudioInput {
 	private TargetDataLine microphone;
 	private Mixer microphoneMixer = null;
-	private Integer packetSize = 10000;
+	private Integer packetSize = 5000;
 
 	private byte[] latestData = null;
 	private final Object lock = new Object();

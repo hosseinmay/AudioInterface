@@ -3,6 +3,8 @@ package com.audiointerface.audio;
 import javax.sound.sampled.*;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class AudioOutput {
 
@@ -37,10 +39,12 @@ public class AudioOutput {
 		speakerStream = new ByteArrayInputStream(audioData);
 		speakerStream = new AudioInputStream(speakerStream, audioFormat,
 						audioData.length/audioFormat.getFrameSize());
-		if (playThread == null || playThread.getState() == Thread.State.TERMINATED) {
+//		if (playThread == null || playThread.getState() == Thread.State.TERMINATED) {
 			playThread = new PlayThread();
 			playThread.start();
-		}
+//		} else {
+//			Logger.getAnonymousLogger().log(Level.INFO, "Thread in progress");
+//		}
 	}
 
 	public static void getMixers(){
