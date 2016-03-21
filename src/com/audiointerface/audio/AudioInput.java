@@ -5,7 +5,7 @@ import javax.sound.sampled.*;
 public class AudioInput {
 	private TargetDataLine microphone;
 	private Mixer microphoneMixer = null;
-	private Integer packetSize = 200;
+	private Integer packetSize = 10000;
 
 	private byte[] latestData = null;
 	private final Object lock = new Object();
@@ -14,7 +14,7 @@ public class AudioInput {
 	public AudioInput(Mixer microphoneMixer) {
 		if (microphoneMixer == null) {
 			Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
-			this.microphoneMixer = AudioSystem.getMixer(mixerInfo[0]);
+			this.microphoneMixer = AudioSystem.getMixer(mixerInfo[4]);
 		} else {
 			this.microphoneMixer = microphoneMixer;
 		}

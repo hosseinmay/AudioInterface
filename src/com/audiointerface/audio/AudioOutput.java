@@ -9,46 +9,38 @@ public class AudioOutput {
 	SourceDataLine speaker;
 	Mixer speakerMixer = null;
 	InputStream speakerStream;
+	AudioFormat audioFormat;
+	Thread playThread;
 
 	public AudioOutput(Mixer speakerMixer) {
 		if (speakerMixer == null) {
 			getMixers();
 			Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
-			this.speakerMixer = AudioSystem.getMixer(mixerInfo[0]);
+			this.speakerMixer = AudioSystem.getMixer(mixerInfo[2]);
 		} else {
 			this.speakerMixer = speakerMixer;
 		}
-	}
-
-	public void outputAudio(byte[] audioData){
-		AudioFormat audioFormat = AudioFormatHelper.getAudioFormat();
-		InputStream speakerStream = new ByteArrayInputStream(audioData);
-		speakerStream = new AudioInputStream(speakerStream, audioFormat,
-						audioData.length/audioFormat.getFrameSize());
+		audioFormat = AudioFormatHelper.getAudioFormat();
 		DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, audioFormat);
+
 		try {
 			speaker = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
 			speaker.open(audioFormat);
 		} catch (LineUnavailableException e) {
 			e.printStackTrace();
+			return;
 		}
 		speaker.start();
-		byte tempBuffer[] = new byte[10000];
-		try	{
-			int cnt;
-			while ((cnt=speakerStream.read(tempBuffer, 0, tempBuffer.length)) != -1) {
-				if (cnt > 0) {
-					speaker.write(tempBuffer, 0, cnt);
-				}
-			}
-		} catch (Exception e) {
-			System.out.println(e);
-			System.exit(0);
+	}
+
+	public void outputAudio(byte[] audioData){
+		speakerStream = new ByteArrayInputStream(audioData);
+		speakerStream = new AudioInputStream(speakerStream, audioFormat,
+						audioData.length/audioFormat.getFrameSize());
+		if (playThread == null || playThread.getState() == Thread.State.TERMINATED) {
+			playThread = new PlayThread();
+			playThread.start();
 		}
-		speaker.drain();
-		speaker.close();
-//	    Thread playThread = new PlayThread();
-//	    playThread.start();
 	}
 
 	public static void getMixers(){
@@ -59,22 +51,25 @@ public class AudioOutput {
 		}
 	}
 
-//	class PlayThread extends Thread{
-//		byte tempBuffer[] = new byte[10000];
-//		public void run(){
-//			try	{
-//				int cnt;
-//				while ((cnt=speakerStream.read(tempBuffer, 0, tempBuffer.length)) != -1) {
-//					if (cnt > 0) {
-//						speaker.write(tempBuffer, 0, cnt);
-//					}
-//				}
-//			} catch (Exception e) {
-//				System.out.println(e);
-//				System.exit(0);
-//			}
-//			speaker.drain();
-//			speaker.close();
-//		}
-//	}
+	class PlayThread extends Thread{
+		public PlayThread() {
+			this.setName("Play Thread");
+		}
+		byte tempBuffer[] = new byte[10000];
+		public void run(){
+			try	{
+				int cnt;
+				while ((cnt=speakerStream.read(tempBuffer, 0, tempBuffer.length)) != -1) {
+					if (cnt > 0) {
+						speaker.write(tempBuffer, 0, cnt);
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(0);
+			}
+			speaker.drain();
+			speaker.close();
+		}
+	}
 }
